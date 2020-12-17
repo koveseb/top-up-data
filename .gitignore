@@ -3,7 +3,7 @@
 
 # But not these files...
 !.gitignore
-!topUpData.py
+!top_up.py
 
 # ...even if they are in subdirectories
 !*/
