@@ -177,7 +177,7 @@ def readVolume(b1):
 def init():
     b1 = webdriver.Chrome(CHROME_PATH)
     b1 = loginMifi(b1)
-    clearHistory(b1)
+    # clearHistory(b1)
 
     volume = readVolume(b1)
     while True:
@@ -186,8 +186,8 @@ def init():
             time.sleep(REFRESHRATE)
             volume = readVolume(b1)
 
-        # if mbsAanvullen():
-        #     clearHistory(b1)
+        if mbsAanvullen():
+            clearHistory(b1)
 
 
 init()
