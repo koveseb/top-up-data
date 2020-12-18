@@ -14,7 +14,7 @@ OVERVIEW = "https://www.t-mobile.nl/my/company/mbaanvullers"
 AANVULLERS = "https://www.t-mobile.nl/my/company/mbaanvullertoevoegen"
 MIFI = "http://mifi.local"
 
-MB_MAX = 800  ## TODO Fine tune MB_MAX
+MB_MAX = 770  ## TODO Fine tune MB_MAX
 REFRESHRATE = 10  ## TODO Increase refresh rate
 
 
@@ -29,8 +29,11 @@ def notFound(element):
 def loginTmobile():
     b2 = webdriver.Chrome(CHROME_PATH)
     b2.get(LOGIN)
+    b2.maximize_window()
 
-    no_cookies = "label[for=Row1_Column1_Cell1_CookieSettings_SelectedCookieTypeAnalytics]"
+    no_cookies = (
+        "label[for=Row1_Column1_Cell1_CookieSettings_SelectedCookieTypeAnalytics]"
+    )
     auto_login = "Section1_Row2_Column1_Cell1_AutoLogin_AutoLoginButton"
 
     try:
@@ -39,7 +42,7 @@ def loginTmobile():
         print(notFound(no_cookies))
 
     try:
-        b2.find_element_by_id().click()
+        b2.find_element_by_id(auto_login).click()
         time.sleep(5)
     except:
         print(notFound(auto_login))
@@ -47,31 +50,38 @@ def loginTmobile():
 
     return b2
 
-
+# TODO Improve the timing
+# TODO mb_overview.click is not working
 def mbsAanvullen():
     b2 = loginTmobile()
+    time.sleep(5)
     b2.get(OVERVIEW)
-
-    mb_overview = "Section1_Row1_Column1_Cell1_SubscriberCallStatusOverview_ChanageButton"
-    mb_remove_li = "jQuery('.list-group-inset[data-interaction-id=bundle_for_unlimited] li:not(:last-of-type)').remove()"
+    time.sleep(5)
 
     try:
-        b2.find_element_by_id(mb_overview).click()
+        b2.execute_script("goToManage('+3197023474585','')")
+        time.sleep(5)
     except:
-        print(notFound(mb_overview))
+        print(notFound("goToManage"))
         b2.quit()
 
     bundle_modal = "buyBundleModal_A0DAY02"
+    mb_remove_li = "jQuery('.list-group-inset[data-interaction-id=bundle_for_unlimited] li:not(:last-of-type)').remove()"
     select_bundle = bundle_modal + " .button-green.button-small.button-block"
     buy_bundle = select_bundle + ".mb-2.mb-tablet-0.order-tablet-last.buyBundleButton"
 
-    try:
-        WebDriverWait(b2, 30).until(EC.presence_of_element_located((By.ID, bundle_modal)))
-    except:
-        print(notFound(bundle_modal))
-        b2.quit()
-
     for i in range(0, 10):
+        try:
+            WebDriverWait(b2, 30).until(
+                EC.presence_of_element_located((By.ID, bundle_modal))
+            )
+        except:
+            print(notFound(bundle_modal))
+            b2.quit()
+            time.sleep(5)
+            b2.get(OVERVIEW)
+            time.sleep(5)
+
         try:
             b2.execute_script(mb_remove_li)
             b2.execute_script("jQuery('#" + bundle_modal + "').css('height', '0')")
@@ -86,8 +96,11 @@ def mbsAanvullen():
         except:
             print("Something went wrong on the aanvullers page")
             time.sleep(5)
-            b2.get(OVERVIEW)
+            b2.refresh()
             time.sleep(5)
+
+    print("Refreshing browser page did not work")
+    b2.quit()
 
 
 def loginMifi(b1):
@@ -177,17 +190,18 @@ def readVolume(b1):
 def init():
     b1 = webdriver.Chrome(CHROME_PATH)
     b1 = loginMifi(b1)
-    # clearHistory(b1)
+    clearHistory(b1)
 
     volume = readVolume(b1)
-    while True:
-        while volume <= MB_MAX:
-            print("Current Volume: " + str(volume))
-            time.sleep(REFRESHRATE)
-            volume = readVolume(b1)
+    # while True:
+    #     while volume <= MB_MAX:
+    #         print("Current Volume: " + str(volume))
+    #         time.sleep(REFRESHRATE)
+    #         volume = readVolume(b1)
 
-        if mbsAanvullen():
-            clearHistory(b1)
+    if mbsAanvullen():
+        clearHistory(b1)
+        print("mbsAanvullen complete")
 
 
 init()
