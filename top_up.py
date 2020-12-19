@@ -13,8 +13,8 @@ MB_AANVULLERS = "https://www.t-mobile.nl/my/company/mbaanvullers"
 MB_AANVULLERS_TOEVOEGEN = "https://www.t-mobile.nl/my/company/mbaanvullertoevoegen"
 MIFI_LOGIN = "http://mifi.local"
 
-MB_MIN = 200  ## TODO Fine tune MB_MIN
-REFRESH_RATE = 10  ## TODO Increase refresh rate
+MB_MIN = 200
+REFRESH_RATE = 10
 
 
 ## TODO Send desktop notifications when bot succeeds and when it fails
@@ -78,8 +78,8 @@ def mbsAanvullen(b2):
 
     bundle_modal = "buyBundleModal_A0DAY02"
     mb_remove_li = "jQuery('.list-group-inset[data-interaction-id=bundle_for_unlimited] li:not(:last-of-type)').remove()"
-    select_bundle = "button[data-modal-toggle=\"#" + bundle_modal + "\"]"
-    buy_bundle = "button[data-interaction-id=\"aanvullers__1 GB-aanvuller NL (zone NL)\"]"
+    select_bundle = 'button[data-modal-toggle="#' + bundle_modal + '"]'
+    buy_bundle = 'button[data-interaction-id="aanvullers__1 GB-aanvuller NL (zone NL)"]'
 
     for i in range(0, 10):
         try:
