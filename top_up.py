@@ -8,14 +8,13 @@ from selenium.webdriver.support import expected_conditions as EC
 
 CHROME_PATH = "/home/kove/code/python/drivers/chromedriver"
 
-LOGIN = "https://www.t-mobile.nl/login"
-VERBRUIK = "https://www.t-mobile.nl/my/company/verbruik-en-kosten"
-OVERVIEW = "https://www.t-mobile.nl/my/company/mbaanvullers"
-AANVULLERS = "https://www.t-mobile.nl/my/company/mbaanvullertoevoegen"
-MIFI = "http://mifi.local"
+TMO_LOGIN = "https://www.t-mobile.nl/login"
+MB_AANVULLERS = "https://www.t-mobile.nl/my/company/mbaanvullers"
+MB_AANVULLERS_TOEVOEGEN = "https://www.t-mobile.nl/my/company/mbaanvullertoevoegen"
+MIFI_LOGIN = "http://mifi.local"
 
-MB_MAX = 770  ## TODO Fine tune MB_MAX
-REFRESHRATE = 10  ## TODO Increase refresh rate
+MB_MIN = 200  ## TODO Fine tune MB_MIN
+REFRESH_RATE = 10  ## TODO Increase refresh rate
 
 
 ## TODO Send desktop notifications when bot succeeds and when it fails
@@ -28,12 +27,10 @@ def notFound(element):
 
 def loginTmobile():
     b2 = webdriver.Chrome(CHROME_PATH)
-    b2.get(LOGIN)
+    b2.get(TMO_LOGIN)
     b2.maximize_window()
 
-    no_cookies = (
-        "label[for=Row1_Column1_Cell1_CookieSettings_SelectedCookieTypeAnalytics]"
-    )
+    no_cookies = "label[for=Row1_Column1_Cell1_CookieSettings_SelectedCookieTypeAnalytics]"
     auto_login = "Section1_Row2_Column1_Cell1_AutoLogin_AutoLoginButton"
 
     try:
@@ -50,12 +47,26 @@ def loginTmobile():
 
     return b2
 
-# TODO Improve the timing
-# TODO mb_overview.click is not working
-def mbsAanvullen():
+
+def bekijkVerbruik():
     b2 = loginTmobile()
-    time.sleep(5)
-    b2.get(OVERVIEW)
+
+    bundle_status = ".bundle-status-unit-value"
+    u = "[\D+]"
+
+    try:
+        bundle_value = b2.find_element_by_css_selector(bundle_status).get_attribute("innerHTML")
+    except:
+        print(notFound(bundle_status))
+        b2.quit()
+    else:
+        verbruik = int(float(re.sub(u, "", bundle_value)))
+        print("T-Mobile dashboard verbruik: " + str(verbruik))
+        return verbruik, b2
+
+
+def mbsAanvullen(b2):
+    b2.get(MB_AANVULLERS)
     time.sleep(5)
 
     try:
@@ -67,19 +78,17 @@ def mbsAanvullen():
 
     bundle_modal = "buyBundleModal_A0DAY02"
     mb_remove_li = "jQuery('.list-group-inset[data-interaction-id=bundle_for_unlimited] li:not(:last-of-type)').remove()"
-    select_bundle = bundle_modal + " .button-green.button-small.button-block"
-    buy_bundle = select_bundle + ".mb-2.mb-tablet-0.order-tablet-last.buyBundleButton"
+    select_bundle = "button[data-modal-toggle=\"#" + bundle_modal + "\"]"
+    buy_bundle = "button[data-interaction-id=\"aanvullers__1 GB-aanvuller NL (zone NL)\"]"
 
     for i in range(0, 10):
         try:
-            WebDriverWait(b2, 30).until(
-                EC.presence_of_element_located((By.ID, bundle_modal))
-            )
+            WebDriverWait(b2, 30).until(EC.presence_of_element_located((By.ID, bundle_modal)))
         except:
             print(notFound(bundle_modal))
             b2.quit()
             time.sleep(5)
-            b2.get(OVERVIEW)
+            b2.get(MB_AANVULLERS_TOEVOEGEN)
             time.sleep(5)
 
         try:
@@ -88,10 +97,9 @@ def mbsAanvullen():
             b2.find_element_by_css_selector(select_bundle).click()
             b2.execute_script("jQuery('#" + bundle_modal + "').css('height', 'auto')")
             time.sleep(3)
-            # b2.find_element_by_css_selector(buy_bundle).click()
-            print("Bevestigen geclicked")
-            time.sleep(420)
-
+            b2.find_element_by_css_selector(buy_bundle).click()
+            print("Bevestigen succeeded")
+            b2.quit()
             return True
         except:
             print("Something went wrong on the aanvullers page")
@@ -104,7 +112,7 @@ def mbsAanvullen():
 
 
 def loginMifi(b1):
-    b1.get(MIFI)
+    b1.get(MIFI_LOGIN)
     login = "logout_span"
     username_field = "username"
     password_field = "password"
@@ -184,7 +192,6 @@ def readVolume(b1):
             time.sleep(3)
         else:
             break
-    b1.quit()
 
 
 def init():
@@ -192,16 +199,20 @@ def init():
     b1 = loginMifi(b1)
     clearHistory(b1)
 
-    volume = readVolume(b1)
-    # while True:
-    #     while volume <= MB_MAX:
-    #         print("Current Volume: " + str(volume))
-    #         time.sleep(REFRESHRATE)
-    #         volume = readVolume(b1)
+    while True:
+        verbruik, b2 = bekijkVerbruik()
+        mb_max = verbruik - MB_MIN
+        print("MB max = " + str(mb_max))
 
-    if mbsAanvullen():
-        clearHistory(b1)
-        print("mbsAanvullen complete")
+        volume = readVolume(b1)
+        while volume <= mb_max:
+            print("Current Volume: " + str(volume))
+            time.sleep(REFRESH_RATE)
+            volume = readVolume(b1)
+        else:
+            if mbsAanvullen(b2):
+                clearHistory(b1)
+                print("mbsAanvullen complete")
 
 
 init()
