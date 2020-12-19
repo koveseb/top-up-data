@@ -1,7 +1,5 @@
 # Ignore everything
 *
-.env
-.env/*
 
 # But not these files...
 !.gitignore
