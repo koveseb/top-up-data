@@ -1,25 +1,33 @@
+import config
 import re
 import time
+import subprocess as s
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-CHROME_PATH = "/home/kove/code/python/drivers/chromedriver"
-
-TMO_LOGIN = "https://www.t-mobile.nl/login"
-MB_AANVULLERS = "https://www.t-mobile.nl/my/company/mbaanvullers"
-MB_AANVULLERS_TOEVOEGEN = "https://www.t-mobile.nl/my/company/mbaanvullertoevoegen"
+TMO = "https://www.t-mobile.nl/"
+TMO_LOGIN = TMO + "login"
+MB_AANVULLERS = TMO + "my/company/mbaanvullers"
+MB_AANVULLERS_TOEVOEGEN = TMO + "my/company/mbaanvullertoevoegen"
 MIFI_LOGIN = "http://mifi.local"
 
 MB_MIN = 200
 REFRESH_RATE = 10
 
+opts = Options()
+opts.headless = False
+
 
 ## TODO Send desktop notifications when bot succeeds and when it fails
 ## TODO Fine tune all the try except blocks
-## TODO Make headless
+
+
+def notify(msg):
+    s.call(["notify-send", "T-Mobile Top Up", msg])
 
 
 def notFound(element):
@@ -27,7 +35,7 @@ def notFound(element):
 
 
 def loginTmobile():
-    b2 = webdriver.Chrome(CHROME_PATH)
+    b2 = webdriver.Firefox(options=opts)
     b2.get(TMO_LOGIN)
     b2.maximize_window()
 
@@ -71,7 +79,7 @@ def mbsAanvullen(b2):
     time.sleep(5)
 
     try:
-        b2.execute_script("goToManage('+3197023474585','')")
+        b2.execute_script("goToManage(" + config.tel_number + ",'')")
         time.sleep(5)
     except:
         print(notFound("goToManage"))
@@ -118,8 +126,8 @@ def loginMifi(b1):
     username_field = "username"
     password_field = "password"
     confirm = "pop_login"
-    username = "admin"
-    password = "9z$Y1kLL6E8k"
+    username = config.username
+    password = config.password
     statistic = "statistic"
 
     try:
@@ -196,7 +204,7 @@ def readVolume(b1):
 
 
 def init():
-    b1 = webdriver.Chrome(CHROME_PATH)
+    b1 = webdriver.Firefox(options=opts)
     b1 = loginMifi(b1)
     clearHistory(b1)
 
