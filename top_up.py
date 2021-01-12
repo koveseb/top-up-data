@@ -35,7 +35,7 @@ def notFound(element):
 
 
 def loginTmobile():
-    b2 = webdriver.Firefox(options=opts)
+    b2 = webdriver.Firefox(options=opts, service_log_path="/dev/null")
     b2.get(TMO_LOGIN)
     b2.maximize_window()
 
@@ -204,7 +204,7 @@ def readVolume(b1):
 
 
 def init():
-    b1 = webdriver.Firefox(options=opts)
+    b1 = webdriver.Firefox(options=opts, service_log_path="/dev/null")
     b1 = loginMifi(b1)
     clearHistory(b1)
 
